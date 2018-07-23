@@ -10,9 +10,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Label;
-import java.awt.LayoutManager;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +27,8 @@ import javax.swing.JTextField;
 public class Bills extends javax.swing.JFrame {
 
     BoarderDao dao = new BoarderDao();
-    List<JTextField> listOfTextFields = new ArrayList<JTextField>();
+    List<JTextField> listOfTextFields1 = new ArrayList<JTextField>();
+    List<JTextField> listOfTextFields2 = new ArrayList<JTextField>();
     double water = 0;
     double light = 0;
     int noOfBoarders = 0;
@@ -179,18 +177,14 @@ public class Bills extends javax.swing.JFrame {
         try {
             water = Double.parseDouble(txtWater.getText());
             light = Double.parseDouble(txtLight.getText());
-            int totalDays = 0;
-            Component[] components = pnlList.getComponents();
-            for (Component component : components) {
-                if (component instanceof JTextField) {
-                    totalDays += Integer.parseInt(((JTextField) component).getText());
-                    System.out.println(totalDays);
-                }
-                component.getName();
-            }
+            int waterTotalDays = 0;
+            int lightTotalDays = 0;
 
-            displayOutput(totalDays);
-            System.out.println("total days" + totalDays);
+            waterTotalDays = calculateTotalWaterDays();
+            lightTotalDays = calculateTotalLightDays();
+
+            displayOutput(waterTotalDays,lightTotalDays);
+            
 
         } catch (RuntimeException ex) {
             Logger.getLogger(Bills.class.getName()).log(Level.SEVERE, null, ex);
@@ -264,32 +258,50 @@ public class Bills extends javax.swing.JFrame {
 
                 // Create constraints
                 GridBagConstraints textFieldConstraints = new GridBagConstraints();
+                GridBagConstraints textFieldConstraints2 = new GridBagConstraints();
                 GridBagConstraints labelConstraints = new GridBagConstraints();
+
+                //setting column headers to the panel
+                String headers[] = {"Boarder's Name", "Days for Water-Bill", "Days for Light-Bill"};
+                for (int i = 0; i < headers.length; i++) {
+                    labelConstraints.gridx = i;
+                    labelConstraints.gridy = 0;
+                    pnlList.add(new JLabel(headers[i]), labelConstraints);
+                }
 
                 for (int i = 0; i < selectAll.size(); i++) {
                     System.out.println("iterating");
                     // Label constraints
                     labelConstraints.gridx = 0;
-                    labelConstraints.gridy = i;
+                    labelConstraints.gridy = i + 1;
 
                     // Text field constraints
                     textFieldConstraints.gridx = 1;
-                    textFieldConstraints.gridy = i;
+                    textFieldConstraints.gridy = i + 1;
+
+                    textFieldConstraints2.gridx = 2;
+                    textFieldConstraints2.gridy = i + 1;
 
                     JTextField txt = new JTextField();
-                    txt.setName("txt" + selectAll.get(i).getName());
+                    txt.setName("txt" + selectAll.get(i).getName() + "_water");
                     txt.setColumns(5);
-                    listOfTextFields.add(txt);
+                    listOfTextFields1.add(txt);
+
+                    JTextField txt2 = new JTextField();
+                    txt2.setName("txt" + selectAll.get(i).getName() + "_light");
+                    txt2.setColumns(5);
+                    listOfTextFields2.add(txt2);
 
                     // Add labels and text fields to panel
-                    pnlList.add(new Label(selectAll.get(i).getName()), labelConstraints);
-                    pnlList.add(listOfTextFields.get(i), textFieldConstraints);
+                    pnlList.add(new JLabel(selectAll.get(i).getName()), labelConstraints);
+                    pnlList.add(listOfTextFields1.get(i), textFieldConstraints);
+                    pnlList.add(listOfTextFields2.get(i), textFieldConstraints2);
                     System.out.println("addded to panel");
 
                     // Align components top-to-bottom
                     GridBagConstraints c = new GridBagConstraints();
                     c.gridx = 0;
-                    c.gridy = selectAll.size();
+                    c.gridy = selectAll.size() + 1;
                     c.weighty = 1;
                     pnlList.add(new JLabel(), c);
                 }
@@ -303,7 +315,7 @@ public class Bills extends javax.swing.JFrame {
         }
     }
 
-    private void displayOutput(int totalDays) {
+    private void displayOutput(int waterdays,int lightdays) {
         System.out.println("display");
         JPanel newPanel = new JPanel(new GridBagLayout());
         GridBagLayout layout = (GridBagLayout) pnlList.getLayout();
@@ -311,62 +323,90 @@ public class Bills extends javax.swing.JFrame {
         System.out.println("got components");
         GridBagConstraints bagConstraints = new GridBagConstraints();
 
-        bagConstraints.gridx = 0;
-        bagConstraints.gridy = 0;
-        newPanel.add(new Label("Name"), bagConstraints);
+        String headers[] = {"Boarder's Name", "Days-Water", "Days-Light", "Water", "Light", "Water+Light"};
+        for (int i = 0; i < headers.length; i++) {
+            bagConstraints.gridx = i;
+            bagConstraints.gridy = 0;
+            newPanel.add(new JLabel(headers[i]), bagConstraints);
 
-        bagConstraints.gridx = 1;
-        bagConstraints.gridy = 0;
-        newPanel.add(new Label("No. of Days"), bagConstraints);
-
-        bagConstraints.gridx = 2;
-        bagConstraints.gridy = 0;
-        newPanel.add(new Label("Water"), bagConstraints);
-
-        bagConstraints.gridx = 3;
-        bagConstraints.gridy = 0;
-        newPanel.add(new Label("Light"), bagConstraints);
-
-        bagConstraints.gridx = 4;
-        bagConstraints.gridy = 0;
-        newPanel.add(new Label("Water+Light"), bagConstraints);
+        }
 
         System.out.println("added headings");
+        GridBagConstraints textConstraints = new GridBagConstraints();
         for (int i = 0; i < noOfBoarders; i++) {
             for (Component component : components) {
                 GridBagConstraints gbc = layout.getConstraints(component);
-                if (gbc.gridx == 0 && gbc.gridy == i) {
+                if (gbc.gridx == 0 && gbc.gridy == i + 1) {
                     GridBagConstraints labelConstraints = new GridBagConstraints();
                     labelConstraints.gridx = 0;
-                    labelConstraints.gridy = i+1;
+                    labelConstraints.gridy = i + 1;
                     newPanel.add(component, labelConstraints);
-                    System.out.println("add name label");
+                    System.out.println("add name label"+((JLabel)component).getText());
                 }
 
-                if (gbc.gridx == 1 && gbc.gridy == i) {
-                    GridBagConstraints textConstraints = new GridBagConstraints();
+                if (gbc.gridx == 1 && gbc.gridy == i + 1) {
                     textConstraints.gridx = 1;
-                    textConstraints.gridy = i+1;
-                    newPanel.add(new Label(((JTextField) component).getText()), textConstraints);
-                    int days = Integer.parseInt(((JTextField) component).getText());
+                    textConstraints.gridy = i + 1;
+                    newPanel.add(new JLabel(((JTextField) component).getText()), textConstraints);
+                    int days = Integer.parseInt(((JTextField) component).getText().trim());
                     System.out.println("add num of days");
 
                     DecimalFormat df = new DecimalFormat("#.##");
 
-                    textConstraints.gridx = 2;
-                    double boarderWater = Double.valueOf(df.format(water / totalDays * days));
-                    newPanel.add(new JLabel(boarderWater + ""), textConstraints);
-
                     textConstraints.gridx = 3;
-                    double boarderLight = Double.valueOf(df.format(light / totalDays * days));
+                    double a=water / waterdays * days*1.0;
+                    double boarderWater = Double.valueOf(df.format(a));
+                    newPanel.add(new JLabel(boarderWater + ""), textConstraints);
+                    continue;
+
+                }
+
+                if (gbc.gridx == 2 && gbc.gridy == i + 1) {
+                    textConstraints.gridx = 2;
+                    textConstraints.gridy = i + 1;
+                    newPanel.add(new JLabel(((JTextField) component).getText()), textConstraints);
+                    int days = Integer.parseInt(((JTextField) component).getText().trim());
+                    System.out.println("add num of days");
+
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    textConstraints.gridx = 4;
+                    double b=light / lightdays * days*1.0;
+                    double boarderLight = Double.valueOf(df.format(b));
                     newPanel.add(new JLabel(boarderLight + ""), textConstraints);
 
-                    textConstraints.gridx = 4;
-                    newPanel.add(new JLabel((df.format(boarderLight + boarderWater)) + ""), textConstraints);
-                    System.out.println("added calculations");
                 }
             }
 
+        }
+
+        Component[] components1 = newPanel.getComponents();
+        for (int i = 0; i < noOfBoarders; i++) {
+            double water = 0;
+            double light = 0;
+            for (Component component : components1) {
+                GridBagConstraints gbc = layout.getConstraints(component);
+                if (gbc.gridx == 3 && gbc.gridy == i + 1) {
+                    textConstraints.gridx = 3;
+                    textConstraints.gridy = i + 1;
+
+                    water = Double.parseDouble(((JTextField) component).getText().trim());
+                    continue;
+                }
+
+                if (gbc.gridx == 4 && gbc.gridy == i + 1) {
+                    textConstraints.gridx = 4;
+                    textConstraints.gridy = i + 1;
+
+                    light = Double.parseDouble(((JTextField) component).getText().trim());
+                }
+            }
+
+            DecimalFormat df = new DecimalFormat("#.##");
+
+            textConstraints.gridx = 5;
+            
+            newPanel.add(new JLabel((df.format(water + light)) + ""), textConstraints);
+            System.out.println("added calculations");
         }
 //        this.remove(pnlList);
 //        this.remove(btnConfirm);
@@ -376,12 +416,50 @@ public class Bills extends javax.swing.JFrame {
 //        newPanel.setVisible(true);
         System.out.println("old : " + components.length);
         pnlList.removeAll();
-        Component[] components1 = newPanel.getComponents();
-        System.out.println("new : "+components1.length);
-        layout=(GridBagLayout) newPanel.getLayout();
-        for (Component component : components1) {
+        Component[] components2 = newPanel.getComponents();
+        System.out.println("new : " + components1.length);
+        layout = (GridBagLayout) newPanel.getLayout();
+        for (Component component : components2) {
             GridBagConstraints gbc = layout.getConstraints(component);
-            pnlList.add(component,gbc);
+            pnlList.add(component, gbc);
         }
+    }
+
+    private int calculateTotalWaterDays() {
+        Component[] components = pnlList.getComponents();
+        GridBagLayout layout = (GridBagLayout) pnlList.getLayout();
+
+        int totalDays = 0;
+        for (Component component : components) {
+            if (component instanceof JTextField) {
+                GridBagConstraints constraints = layout.getConstraints(component);
+                if (constraints.gridx == 3) {
+                    totalDays += Integer.parseInt(((JTextField) component).getText().trim());
+                }
+
+            }
+
+        }
+        System.out.println(totalDays);
+        return totalDays;
+    }
+
+    private int calculateTotalLightDays() {
+        Component[] components = pnlList.getComponents();
+        GridBagLayout layout = (GridBagLayout) pnlList.getLayout();
+
+        int totalDays = 0;
+        for (Component component : components) {
+            if (component instanceof JTextField) {
+                GridBagConstraints constraints = layout.getConstraints(component);
+                if (constraints.gridx == 4) {
+                    totalDays += Integer.parseInt(((JTextField) component).getText().trim());
+                }
+
+            }
+
+        }
+        System.out.println(totalDays);
+        return totalDays;
     }
 }
