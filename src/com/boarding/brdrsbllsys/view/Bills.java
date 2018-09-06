@@ -440,7 +440,7 @@ public class Bills extends javax.swing.JFrame {
             }
 
         }
-        System.out.println(totalDays);
+        System.out.println("total water days "+totalDays);
         return totalDays;
     }
 
@@ -459,7 +459,7 @@ public class Bills extends javax.swing.JFrame {
             }
 
         }
-        System.out.println(totalDays);
+        System.out.println("total light days "+totalDays);
         return totalDays;
     }
 }
